@@ -9,10 +9,9 @@ import java.io.FileOutputStream
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-
 class RunicBuildServer : JavaPlugin() {
 
-    lateinit var buildArtifactLocation: File
+    private lateinit var buildArtifactLocation: File
 
     override fun onEnable() {
         instance = this
@@ -20,6 +19,7 @@ class RunicBuildServer : JavaPlugin() {
         saveDefaultConfig()
         config.options().copyDefaults(true)
         buildArtifactLocation = File(config.getString("artifact-destination") ?: throw IllegalStateException("Configuration file missing artifact-destination"))
+        if (!buildArtifactLocation.exists()) buildArtifactLocation.mkdirs()
 
         Bukkit.getPluginCommand("exports")!!.setExecutor(ExportsCommand())
     }
@@ -34,6 +34,8 @@ class RunicBuildServer : JavaPlugin() {
         File(buildArtifactLocation, "$tag.zip").delete()
     }
 
+    fun getArtifacts() = buildArtifactLocation.list()?.map { it.replace(".zip", "") } ?: listOf()
+
     private fun zipWorlds(zipFile: File, vararg worlds: File) {
         ZipOutputStream(FileOutputStream(zipFile)).use { outputStream ->
             for (world in worlds) zipFile(world, world.name, outputStream)
@@ -41,24 +43,22 @@ class RunicBuildServer : JavaPlugin() {
     }
 
     private fun zipFile(fileToZip: File, fileName: String, zipOut: ZipOutputStream) {
-        if (fileToZip.isHidden) {
-            return
-        }
         if (fileToZip.isDirectory) {
             val children = fileToZip.listFiles()!!
             for (childFile in children) {
                 zipFile(childFile, fileName + "/" + childFile.name, zipOut)
             }
         } else {
-            val inputStream = FileInputStream(fileToZip)
-            val zipEntry = ZipEntry(fileName)
-            zipOut.putNextEntry(zipEntry)
-            val bytes = ByteArray(1024)
-            var length: Int
-            while (inputStream.read(bytes).also { length = it } >= 0) {
-                zipOut.write(bytes, 0, length)
+            FileInputStream(fileToZip).use { inputStream ->
+                val zipEntry = ZipEntry(fileName)
+                zipOut.putNextEntry(zipEntry)
+                val bytes = ByteArray(1024)
+                var length: Int
+                while (inputStream.read(bytes).also { length = it } >= 0) {
+                    zipOut.write(bytes, 0, length)
+                }
             }
-            inputStream.close()
+
         }
     }
 
@@ -66,4 +66,5 @@ class RunicBuildServer : JavaPlugin() {
         lateinit var instance: RunicBuildServer
             private set
     }
+
 }
