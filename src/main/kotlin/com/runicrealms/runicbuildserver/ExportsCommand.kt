@@ -32,7 +32,8 @@ class ExportsCommand: CommandExecutor {
                                 sender.sendMessage("${ChatColor.RED}Build export tag cannot contain \".zip\"")
                                 return@Runnable
                             }
-                            Bukkit.broadcastMessage("${ChatColor.DARK_AQUA}EXPORTING WORLD: do not move or place blocks!")
+                            Bukkit.broadcastMessage("${ChatColor.DARK_AQUA}EXPORTING WORLD: Do not move or place blocks!")
+                            Bukkit.broadcastMessage("${ChatColor.DARK_RED}WARNING: The server may hang and you get may get disconnected! Check console for info.")
                             Bukkit.getScheduler().runTask(RunicBuildServer.instance, Runnable {
                                 try {
                                     RunicBuildServer.instance.createExport(artifactTag)
